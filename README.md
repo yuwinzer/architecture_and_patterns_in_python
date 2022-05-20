@@ -1,1 +1,0 @@
-homework training course
