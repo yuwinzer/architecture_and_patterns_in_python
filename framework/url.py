@@ -8,4 +8,4 @@ class Url:
     # path: str
     # controller: object
     # view: classmethod = WSGI.views
-    links: dict# = WSGI.links
+    links: dict

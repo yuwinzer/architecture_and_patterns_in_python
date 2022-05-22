@@ -4,5 +4,6 @@ import views as v
 links = {
     '/': v.index,
     '/index': v.index,
-    '/about': v.about
+    '/about': v.about,
+    '/contacts': v.contacts
 }
