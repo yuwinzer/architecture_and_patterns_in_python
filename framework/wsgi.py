@@ -1,39 +1,58 @@
+import setup
 from framework.request import Request
-# from url import Url
-# from views import Views
+from framework.responses import Responses
+from framework.front_controller import Middleware
 from url import links
 # GET, POST, PUT, HEAD, DELETE, TRACE, OPTIONS, CONNECT, PATCH
 
 
 class WSGI:
-    def __init__(self, front_controllers: tuple):
-        self.front_controllers = front_controllers
+    def __init__(self):
+        self.m_ware = Middleware()
+        self.m_wares = setup.MIDDLEWARE
 
     def __call__(self, environ: dict, start_response):
-        response = None
-        request = Request(environ)
+        self.environ = environ
+        self.start_response = start_response
 
-        # front_controller
-        if self.front_controllers:
-            for front in self.front_controllers:
-                response = front(request, self.generate_answer, start_response)
-            # return response if response else [b'404']
+        self.request = Request(self.environ)
+        self.responser = Responses()
+        self.response = None
+        # print(f'{self.responser=}')
+
+        # Call front_controllers if registered
+        if self.m_wares:
+            # Pre front controllers
+            for front in self.m_wares:
+                self.response = front(self.m_ware, self.request, self.response, self.responser, True)
+            # If middleware does not change status - generate answer
+            # Else use middleware status
+            # print(f'{self.responser.status=}')
+            self.response = self.generate_answer()
+            # Post front controllers
+            for front in self.m_wares:
+                self.response = front(self.m_ware, self.request, self.response, self.responser, False)
         else:
-            response = self.generate_answer(start_response, request)
-        return response if response else [b'404']
+            self.response = self.generate_answer()
+
+        # print(f'{self.response=}')
+        return self.response
 
     # page_controller
-    def generate_answer(self, start_response, req):
-        # if req.method in ('GET', 'POST'):
-        for custom_url, custom_view in links.items():
-            if req.path == custom_url:
-                print(f'{req.method=} {req.query_params=}')
-                start_response('200 OK', [('Content-Type', 'text/html')])
-                return [bytes(f'{custom_view(req)}', encoding='utf-8')]
-        # return [bytes(f'unsupported method {req.method}', encoding='utf-8')]
-        # elif req.method == 'POST':
-        #     for custom_url, custom_view in links.items():
-        #         if req.path == custom_url:
-        #             start_response('200 OK', [('Content-Type', 'text/html')])
-        #             return [bytes(f'{custom_view(req.method)}', encoding='utf-8')]
+    def generate_answer(self):
+        if self.responser.status == '':
+            for custom_url, custom_view in links.items():
+                if self.request.path == custom_url:
+                    # print(f'{self.request.method=} {self.request.query_params=} {self.request.path=}')
+                    self.responser.status_200(self.request, custom_view)
+                    break
+            if self.responser.status == '':
+                self.responser.status_404()
+
+        # print(f'{status=} {headers=}')
+        self.start_response(self.responser.status, self.responser.headers)
+        return [bytes(f'{self.responser.body}', encoding='utf-8')]
+
+
+
 

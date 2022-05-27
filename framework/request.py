@@ -8,12 +8,15 @@ class Request:
         self.body = parse.unquote(environ.get('wsgi.input').read().decode("utf-8"))
         self.query_params = self._get_query_params(environ)
         self.path = environ.get('PATH_INFO')
+        self.client_ip4 = environ.get('REMOTE_ADDR')
+        self.origin = environ.get('ORIGIN')
 
     def _get_http_headers(self, environ: dict):
         headers = {}
         for key, value in environ.items():
             if key.startswith('HTTP_'):
                 headers[key[5:]] = value
+            #     print('HTTP:', key, value)
             # else:
             #     print('NOT HTTP:', key, value)
         return headers

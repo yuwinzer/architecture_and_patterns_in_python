@@ -1,14 +1,22 @@
 
 class View:
-    def __init__(self, frontend_path: str = 'frontend', frontend_vars: dict = None):
+    def __init__(self,
+                 frontend_path: str = 'frontend',
+                 frontend_vars: dict = None,
+                 page_template: str = ''):
         self.frontend_path = frontend_path
         self.frontend_vars = frontend_vars
+        self.page_template = page_template
+        self.page_name = ''
 
     def view(self, page_name: str = 'index.html'):
-        with open(f'{self.frontend_path}{page_name}', 'r') as file:
-            data = file.read().replace('\n', '').replace('    ', ' ')
-        # Заменяем переменные на код из внешних файлов
-        data = self._just_include_that_file(data)
+        self.page_name = page_name
+        with open(f'{self.frontend_path}{self.page_template if self.page_template else self.page_name}', 'r') as file:
+            page = file.read().replace('\n', '').replace('    ', ' ')
+        # Заменяем переменные на содержимое из внешних файлов
+        if self.page_template:
+            page = self._just_include_that_file(page)
+        data = self._just_include_that_file(page)
         # Заменяем переменные на ссылки пользователя
         for var, link in self.frontend_vars.items():
             data = data.replace(var, link)
@@ -20,7 +28,8 @@ class View:
             include_start = data.find('{{')
             if include_start >= 0:
                 include_end = data.find('}}', include_start) + 2
-                include_file = data[include_start + 2: include_end - 2]
+                include_text = data[include_start + 2: include_end - 2]
+                include_file = self.page_name if include_text == 'content' else include_text
                 with open(f'{self.frontend_path}{include_file}', 'r') as file:
                     include_data = file.read().replace('\n', '').replace('    ', ' ')
                 data = data[:include_start] + include_data + data[include_end:]
@@ -29,14 +38,3 @@ class View:
             else:
                 break
         return data
-
-        # def __init__(self,
-        #              page_path: str = 'frontend/',
-        #              page_name: str = 'index'):
-        #     self.page_path = page_path
-        #     self.page_name = page_name
-        #
-        # def set_page(self):
-        #     with open(f'{self.page_path}{self.page_name}.html', 'r') as file:
-        #         data = file.read().replace('\n', '')
-        #     return data
