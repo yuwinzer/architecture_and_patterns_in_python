@@ -1,9 +1,10 @@
-# from framework.url import Url
 import views as v
 
 links = {
     '/': v.index,
-    '/index': v.index,
+    # '/index': v.index,
     '/about': v.about,
-    '/contacts': v.contacts
+    '/courses': v.courses,
+    '/contacts': v.contacts,
+    '/admin_page': v.admin
 }

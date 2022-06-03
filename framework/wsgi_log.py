@@ -12,7 +12,7 @@ else:
 # GET, POST, PUT, HEAD, DELETE, TRACE, OPTIONS, CONNECT, PATCH
 
 
-class WSGI:
+class WSGI_Log:
     def __init__(self):
         self.m_ware = Middleware()
         self.m_wares = setup.MIDDLEWARE
@@ -24,6 +24,7 @@ class WSGI:
         self.request = Request(self.environ)
         self.responser = Responses()
         self.response = None
+        print(f'Got request: [{self.request.method}]:{self.request.query_params}')
         # print(f'{self.responser=}')
 
         # Call front_controllers if registered
@@ -37,6 +38,7 @@ class WSGI:
             for front in self.m_wares:  # Post front controllers
                 self.response = front(self.m_ware, self.request, self.response, self.responser, False)
         else:
+
             self.response = self.generate_answer()
 
         # print(f'{self.response=}')
