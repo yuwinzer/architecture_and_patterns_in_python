@@ -1,6 +1,6 @@
 from os import path
 
-import setup
+import settings
 from framework.request import Request
 from framework.responses import Responses
 from framework.front_controller import Middleware
@@ -15,7 +15,7 @@ else:
 class WSGI_Log:
     def __init__(self):
         self.m_ware = Middleware()
-        self.m_wares = setup.MIDDLEWARE
+        self.m_wares = settings.MIDDLEWARE
 
     def __call__(self, environ: dict, start_response):
         self.environ = environ

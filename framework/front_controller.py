@@ -1,10 +1,10 @@
-import setup
+import settings
 from time import time
 
 
 class Middleware:
     def __init__(self):
-        self.setup = setup.MIDDLEWARE_SETUP
+        self.setup = settings.MIDDLEWARE_SETUP
         self.delta_time = None
         if 'cors_ip_whitelist' in self.setup.keys():
             self.cors_ip_whitelist = self.setup['cors_ip_whitelist']

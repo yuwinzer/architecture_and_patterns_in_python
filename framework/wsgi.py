@@ -1,21 +1,29 @@
 from os import path
 
-import setup
+import settings
 from framework.request import Request
 from framework.responses import Responses
 from framework.front_controller import Middleware
 from views import View
+
+# from database import DB
+# from framework.users import Users
 if path.exists('url.py'):
     from url import links
 else:
     links = None
+
+
 # GET, POST, PUT, HEAD, DELETE, TRACE, OPTIONS, CONNECT, PATCH
 
 
 class WSGI:
+    # db = DB
+    # users = Users()
+
     def __init__(self):
         self.m_ware = Middleware()
-        self.m_wares = setup.MIDDLEWARE
+        self.m_wares = settings.MIDDLEWARE
 
     def __call__(self, environ: dict, start_response):
         self.environ = environ
@@ -24,6 +32,7 @@ class WSGI:
         self.request = Request(self.environ)
         self.responser = Responses()
         self.response = None
+        # print(f'GOT REQUEST: {self.request=}')
         # print(f'{self.responser=}')
 
         # Call front_controllers if registered
@@ -46,23 +55,24 @@ class WSGI:
     def generate_answer(self):
         if self.responser.status == '':
             # Search for view under decorator @app
-            for custom_url, custom_view in View.views.items():
-                if self.request.path == custom_url:
-                    self.responser.status_200(self.request, custom_view)
-                    break
+            self.search_url_and_send(View.views)
+            print(f'{self.responser.status=}')
             # Search for view in upl.py -> links
             if links and self.responser.status == '':
-                for custom_url, custom_view in links.items():
-                    if self.request.path == custom_url:
-                        self.responser.status_200(self.request, custom_view)
-                        break
+                self.search_url_and_send(links)
             if self.responser.status == '':
                 self.responser.status_404()
 
-        # print(f'{status=} {headers=}')
+        print(f'SEND STATUS={self.responser.status=} HEADERS={self.responser.headers=}')
+        # print(f'{self.responser.body=}')
         self.start_response(self.responser.status, self.responser.headers)
         return [bytes(f'{self.responser.body}', encoding='utf-8')]
 
-
-
+    def search_url_and_send(self, source: dict, status_funk: classmethod = None):
+        if status_funk is None:
+            status_funk = self.responser.status_200
+        for custom_url, custom_view in source.items():
+            if self.request.path == custom_url:
+                status_funk(self.request, custom_view)
+                return
 

@@ -1,0 +1,127 @@
+body {
+    padding-top: 3rem;
+    padding-bottom: 110px;
+    background-color: rgb(196, 210, 219);
+    margin: 0;
+}
+div.header, footer{
+    color: lightgray;
+    width: 100%;
+    background-color: rgb(46, 60, 69);
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+div.header {
+    position: fixed;
+    text-align: center;
+    top: 0;
+}
+footer {
+    text-align: center;
+    bottom: 0;
+    position: fixed;
+}
+h1 {
+    text-align: center;
+}
+h4 {
+    text-align: center;
+    margin: 100;
+}
+.a {
+    font-weight: bold;
+    color: lightgray;
+}
+.lforms {
+    background-color: rgb(46, 60, 69);
+<!--                padding: 10px;-->
+    height: 70px;
+    align: center;
+}
+div.text{
+    align: center;
+    width: 1024px;
+    height: 100%;
+    overflow: auto;
+    margin: auto;
+<!--                padding: .3rem;-->
+}
+i{
+    margin: auto;
+}
+.lform {
+    text-align: center;
+    float: left;
+    width: 33.3%;
+    height: 50%;
+    overflow: auto;
+    margin: auto;
+<!--                padding: .3rem;-->
+    color: lightgray;
+    background-color: rgb(46, 60, 69);
+}
+.uform {
+    text-align: center;
+    float: left;
+    width: 50%;
+    height: auto;
+    overflow: auto;
+    margin: auto;
+    padding-top: 1%;
+    padding-bottom: 1%;
+    color: lightgray;
+    background-color: rgb(46, 60, 69);
+}
+.cform {
+    text-align: center;
+    float: left;
+    width: 33.33%;
+    height: 300px;
+    overflow: auto;
+    margin: auto;
+}
+.mform {
+    text-align: center;
+    float: center;
+    width: 50%;
+    height: 70%;
+    overflow: auto;
+    margin: auto;
+    color: lightgray;
+    background-color: rgb(46, 60, 69);
+}
+a.lformbutt {
+    display: block;
+    text-decoration: none;
+    text-align: center;
+    width: 97%;
+    height: 48%;
+<!--                overflow: auto;-->
+    margin: 1ren;
+    border: 1px solid rgba(46, 60, 69, 0.4);
+    border-radius: 10px;
+    padding-top: 1%;
+    padding-bottom: 1%;
+    color: rgb(46, 60, 69);
+    background-color: rgb(216, 230, 239);
+    cursor: pointer;
+}
+a.cformbutt {
+    display: block;
+    text-decoration: none;
+    text-align: center;
+    width: 99%;
+    height: 99%;
+<!--                overflow: auto;-->
+    margin: auto;
+    border: 1px solid rgba(46, 60, 69, 0.4);
+    border-radius: 10px;
+<!--                padding-top: 1rem;-->
+<!--                padding-bottom: 1rem;-->
+    color: rgb(46, 60, 69);
+    background-color: rgb(216, 230, 239);
+    cursor: pointer;
+}
+.butt:hover {
+    background-color: rgb(236, 250, 255);
+}
