@@ -1,0 +1,14 @@
+header, footer{
+    color: lightgray;
+    width: 100%;
+    background-color: rgb(46, 60, 69);
+}
+header {
+    position: fixed;
+    top: 0;
+}
+footer {
+    text-align: center;
+    bottom: 0;
+    position: fixed;
+}
