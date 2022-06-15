@@ -5,7 +5,4 @@ from dataclasses import dataclass
 
 @dataclass
 class Url:
-    # path: str
-    # controller: object
-    # view: classmethod = WSGI.views
     links: dict

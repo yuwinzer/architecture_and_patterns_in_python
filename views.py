@@ -6,12 +6,9 @@ FRONTEND_VARS = {
     '%about%': '"/about"',
     '%contacts%': '"/contacts"'
 }
+PAGE_TEMPLATE = 'main_template.html'
 
-Home = View(FRONTEND_PATH, FRONTEND_VARS)
-
-# class Pages(View):
-#     def __init__(self, FRONTEND_PATH, FRONTEND_VARS):
-#         super().__init__()
+Home = View(FRONTEND_PATH, FRONTEND_VARS, PAGE_TEMPLATE)
 
 
 def index(request):
