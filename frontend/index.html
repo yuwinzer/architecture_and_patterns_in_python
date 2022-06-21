@@ -1,117 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <style>
-            body {
-                padding-top: 3rem;
-                padding-bottom: 110px;
-                background-color: rgb(196, 210, 219);
-                margin: 0;
-            }
-            div.header, footer{
-                color: lightgray;
-                width: 100%;
-                background-color: rgb(46, 60, 69);
-                padding-top: 1rem;
-                padding-bottom: 1rem;
-            }
-            div.header {
-                position: fixed;
-                text-align: center;
-                top: 0;
-            }
-            footer {
-                text-align: center;
-                bottom: 0;
-                position: fixed;
-            }
-            h1 {
-                text-align: center;
-            }
-            h4 {
-                text-align: center;
-                margin: 100;
-            }
-            .a {
-                font-weight: bold;
-                color: lightgray;
-            }
-            .lforms {
-                background-color: rgb(46, 60, 69);
-<!--                padding: 10px;-->
-                height: 70px;
-                align: center;
-            }
-            div.text{
-                align: center;
-                width: 1024px;
-                height: 100%;
-                overflow: auto;
-                margin: auto;
-<!--                padding: .3rem;-->
-            }
-            i{
-                margin: auto;
-            }
-            .lform {
-                text-align: center;
-                float: left;
-                width: 33.3%;
-                height: 50%;
-                overflow: auto;
-                margin: auto;
-<!--                padding: .3rem;-->
-                color: lightgray;
-                background-color: rgb(46, 60, 69);
-            }
-            .cform {
-                text-align: center;
-                float: left;
-                width: 33.33%;
-                height: 300px;
-                overflow: auto;
-                margin: auto;
-            }
-            a.lformbutt {
-                display: block;
-                text-decoration: none;
-<!--                float: left;-->
-                width: 98%;
-                height: 50%;
-<!--                overflow: auto;-->
-                margin: 1%;
-                border: 1px solid rgba(46, 60, 69, 0.4);
-                border-radius: 10px;
-                padding-top: 1%;
-                padding-bottom: 1%;
-                color: rgb(46, 60, 69);
-                background-color: rgb(216, 230, 239);
-                cursor: pointer;
-            }
-            a.cformbutt {
-                display: block;
-                text-decoration: none;
-<!--                float: left;-->
-                width: 99%;
-                height: 99%;
-<!--                overflow: auto;-->
-                margin: auto;
-                border: 1px solid rgba(46, 60, 69, 0.4);
-                border-radius: 10px;
-<!--                padding-top: 1rem;-->
-<!--                padding-bottom: 1rem;-->
-                color: rgb(46, 60, 69);
-                background-color: rgb(216, 230, 239);
-                cursor: pointer;
-            }
-            .butt:hover {
-              background-color: rgb(236, 250, 255);
-
-
-        </style>
         <meta charset="UTF-8">
-
         <title>Лучшие курсы на свете</title>
+        <style>
+            {{/css/style.css}}
+        </style>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9/crypto-js.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9/hmac-sha256.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9/enc-base64.min.js"></script>
+        <script>
+            function getdata(result, headers) {
+                var hlist = headers.split("\r\n").map(x=>x.split(/: */,3));
+                for (let i=0; i<hlist.length; i++) {
+                    if (hlist[i][0] == 'http_authorization'){
+                        sessionStorage.setItem('token', hlist[i][1]+":"+hlist[i][2]);
+            <!--            console.log(hlist[i][1]+":"+hlist[i][2]);-->
+                        break;
+                    }
+                }
+                document.body.innerHTML = result;
+            }
+
+<!--            $("body").on("click", "#reg", function(e){-->
+<!--                e.preventDefault();-->
+<!--                var name = encodeURIComponent($('#uname').val());-->
+<!--                var pass = $('#pass').val();-->
+<!--                var tel = $('#tel').val();-->
+<!--                $('#pass').val("");-->
+<!--                var hash = CryptoJS.HmacSHA256(name, pass);-->
+<!--                var hashInBase64 = CryptoJS.enc.Base64.stringify(hash);-->
+<!--                ajax('http://127.0.0.1:8000/register', 'POST', reg, 'act=reg&uname='+name+'&pass='+hashInBase64+'&tel='+tel, {});-->
+<!--            });-->
+
+            function auth(type){
+                console.log(type);
+                var name = encodeURIComponent($('#uname').val());
+                var pass = $('#pass').val();
+                var hash = CryptoJS.HmacSHA256(name, pass);
+                var hashInBase64 = CryptoJS.enc.Base64.stringify(hash);
+                if (type == 'login'){
+                    ajax('http://127.0.0.1:8000/login', 'POST', getdata, 'act=login&uname='+name+'&pass='+hashInBase64, {});
+                }
+                if (type == 'reg'){
+                    var tel = $('#tel').val();
+                    ajax('http://127.0.0.1:8000/register', 'POST', getdata, 'act=reg&uname='+name+'&pass='+hashInBase64+'&tel='+tel, {});
+                }
+            }
+        </script>
+        <script type='text/javascript'>
+            function ajax(url, method, functionName, dataArray, headers) {
+                let xhttp = new XMLHttpRequest();
+                xhttp.open(method, url, true);
+                xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                setHeaders(xhttp, headers);
+                xhttp.send(dataArray);
+            <!--    xhttp.send(requestData(dataArray));-->
+
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        functionName(this.response, this.getAllResponseHeaders());
+                    }
+    <!--                console.log(this.response);-->
+                }
+            }
+            function setHeaders(xhttp, headers){
+    <!--            console.log('headers: '+headers);-->
+                for(let key in headers){
+                    xhttp.setRequestHeader(key, headers[key]);
+                }
+            }
+            function load_html(result, headers) {
+                document.body.innerHTML = result;
+            }
+            function url(addr){
+                var token = this.sessionStorage.getItem('token');
+                if (token){
+                    header = {"Authorization": "Bearer " +  token}
+                }else{
+                    header = {}
+                }
+                ajax(addr, 'GET', load_html, '', header);
+            }
+        </script>
     </head>
     <body>
         <div class="header">
