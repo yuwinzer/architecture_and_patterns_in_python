@@ -1,7 +1,15 @@
 <nav>
-    <a class="a" href=%index%>Главная</a>&ensp;
-    <a class="a" href=%about%>О сайте</a>&ensp;
-    <a class="a" href=%courses%>Курсы</a>&ensp;
-    <a class="a" href=%contacts%>Контакты</a>&ensp;
-    <a class="a" href=%admin_page%>%admin_panel%</a>&ensp;
+    <a class="a" href="javascript:;" onclick="url('%index%');">Главная</a>&ensp;
+    <a class="a" href="javascript:;" onclick="url('%about%');">О сайте</a>&ensp;
+    <a class="a" href="javascript:;" onclick="url('%courses%');">Курсы</a>&ensp;
+    <a class="a" href="javascript:;" onclick="url('%contacts%');">Контакты</a>&ensp;
+    {{is_admin?}}
+        <a class="a" href="javascript:;" onclick="url('%admin%');">Админка</a>&ensp;
+    {{?}}
+    {{verified?}}
+        <a class="a" href="javascript:;" onclick="url('%profile%');">{{username}}</a>&ensp;
+        <a class="a" href="javascript:;" onclick="url('%logout%');">Выйти</a>&ensp;
+    {{else}}
+        <a class="a" href="javascript:;" onclick="url('%login%');">Войти</a>&ensp;
+    {{?}}
 </nav>

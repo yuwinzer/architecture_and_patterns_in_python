@@ -1,0 +1,65 @@
+<h1>
+    Для регистрации введите данные
+</h1>
+<br><br><br><br><br><br>
+<div class="text">
+    <div class="mform">
+        <p>
+            <form action="/register" method="post" enctype="text/plain">
+                <label for="email">@мейл:</label><br>
+                <input type="email" id="email" name="email" value="Basil@mail.ru"><br>
+                <label for="uname">Ник*:</label><br>
+                <input type="text" id="uname" name="uname" value="Alex"><br>
+                <label for="pass">Пароль*:</label><br>
+                <input type="password" id="pass" name="pass" value="123"><br>
+                <label for="tel">Телефон*:</label><br>
+                <input type="tel" id="tel" name="tel" value="555-55-55"><br><br>
+                <input type="button" id="reg" onclick="auth('reg');" value="Подтвердить"><br>
+            </form>
+        <p>
+    </div>
+    {{msg?}}
+    <div class="mform">
+        <p>
+            <div>
+                <span>{{msg}}</span><br>
+            </div>
+        <p>
+    </div>
+    {{?}}
+</div>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9/crypto-js.min.js"></script>-->
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9/hmac-sha256.min.js"></script>-->
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9/enc-base64.min.js"></script>-->
+<!--<script>-->
+<!--function reg(result, headers) {-->
+<!--    var hlist = headers.split("\r\n").map(x=>x.split(/: */,3));-->
+<!--    for (let i=0; i<hlist.length; i++) {-->
+<!--        if (hlist[i][0] == 'http_authorization'){-->
+<!--            sessionStorage.setItem('token', hlist[i][1]+":"+hlist[i][2]);-->
+<!--&lt;!&ndash;            console.log(hlist[i][1]+":"+hlist[i][2]);&ndash;&gt;-->
+<!--            break;-->
+<!--        }-->
+<!--    }-->
+<!--    document.body.innerHTML = result;-->
+<!--}-->
+
+<!--$("body").on("click", "#reg", function(e){-->
+<!--    e.preventDefault();-->
+<!--    var name = encodeURIComponent($('#uname').val());-->
+<!--    var pass = $('#pass').val();-->
+<!--    var tel = $('#tel').val();-->
+<!--    $('#pass').val("");-->
+<!--    var hash = CryptoJS.HmacSHA256(name, pass);-->
+<!--    var hashInBase64 = CryptoJS.enc.Base64.stringify(hash);-->
+<!--    ajax('http://127.0.0.1:8000/register', 'POST', reg, 'act=reg&uname='+name+'&pass='+hashInBase64+'&tel='+tel, {});-->
+<!--});-->
+<!--    $("body").on("click", "#login", function(e){-->
+<!--        var name = encodeURIComponent($('#uname').val());-->
+<!--        var pass = $('#pass').val();-->
+<!--        $('#pass').val("");-->
+<!--        var hash = CryptoJS.HmacSHA256(name, pass);-->
+<!--        var hashInBase64 = CryptoJS.enc.Base64.stringify(hash);-->
+<!--        $('#reg').val('Bearer '+name+":"+hashInBase64);-->
+<!--    });-->
+<!--</script>-->
