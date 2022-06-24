@@ -4,7 +4,7 @@
 <br>
 <div class="lforms">
     <div class="text">
-        {{page*6}}
+        {{page*lines_in}}
             <div class="lform">{{line_form#line}}</div>
         {{*}}
     </div>
@@ -16,3 +16,7 @@
 <!--    <a class="a" href='/courses?line=2'>{{line}}</a>&ensp;-->
 <!--    <a class="a" href='/courses?line=3'>{{line}}</a>&ensp;-->
 {{forms}}
+<br>
+{{line_id?>0}}
+    <a class="cformbutt" href="javascript:;" onclick="url('%courses%');">Назад</a>
+{{?}}

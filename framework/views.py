@@ -22,17 +22,16 @@ class View:
         self.query_params = None
         self.file_name = None
 
-        # self.iterable_starter = 0
+        self.temp_var_name = ''
 
         self.error = 0
         self.max_errors = 3
 
     def view(self, request=None, page_file: str = 'index.html', injections=None, query_params=None):
         self.error = 0
-        # self.iterable_starter = 0
         self._apply_to_self(injections, query_params)
         if request.verified:
-            # print(f'VERIFIED: {request.verified=}')
+            # Заменяем {{переменные}} инжекций если пользователь аутентифицирован
             self.injections['verified'] = True
             self.injections['username'] = request.username
         try:
@@ -43,20 +42,18 @@ class View:
             # Заменяем %константы% на константы пользователя
             for var, link in self.frontend_const.items():
                 data = data.replace(var, link)
-            # for var, link in self.frontend_admin_vars.items():
-            #     data = data.replace(var, link if self.is_admin else '')
 
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print(f'{fname}[{exc_tb.tb_lineno}]ERROR: while parsing view: ({page_file=}) {e}')
+            print(f'{fname}[{exc_tb.tb_lineno}]ERROR: while parsing view: {page_file=}\nWHY: {e}')
             self.error += 1
             return '500'
-        # print(f'====DATA: {data}')
         return data
 
     # Рекурсивно-костыльный шаблонизатор. С JINJA не разбирался, интересно было написать свой
-    def _just_inject_in_that_file(self, html_data, file: str, num: int = 0):
+    def _just_inject_in_that_file(self, html_data: int | list | str, file: str, num: int = 0)\
+            -> str | tuple[str, int]:
         try:
             stopper = 0
             layer = 0
@@ -68,7 +65,6 @@ class View:
             else:
                 data = html_data
             data = self._remove_comments(data, file)
-            # data = self._remove_comments(data, file) if isinstance(html_data, str) else html_data
             while layer <= DEEPNESS:
 
                 # print(f'LAYER: {layer}')
@@ -78,6 +74,19 @@ class View:
                     inj_end = data.find('}}', inj_start)
                     if inj_end == -1:
                         raise Exception(f'ERROR: not found "}}" in {file}')
+
+                    # inj_next = data.find('{{', inj_start + 2, inj_end)
+                    # print(f'{inj_start=} {inj_next=} {inj_end=} {data[inj_start: inj_end]=}')
+                    # if -1 < inj_next < inj_end:
+                    #     data_inside = data[inj_next + 2: inj_end]
+                    #     print(f'{data_inside=}')
+                    #     # data_inside, _ = self._just_inject_in_that_file(data_inside, file)
+                    #     data = f'{data[:inj_next]}{data_inside}{data[inj_end + 2:]}'
+                    #     inj_end = data.find('}}', inj_end + 2)
+                    #     print(f'{data=}')
+                    #     if inj_end == -1:
+                    #         raise Exception(f'ERROR: not found "}}" in {file}')
+
                     inj_var = data[inj_start + 2: inj_end]
                     if len(inj_var) <= 1:
                         continue
@@ -125,26 +134,32 @@ class View:
                             # print(f'NUM: {type(num)=} {num=}')
                             if num < len(inj_arg):
                                 # print(f'{num=} {key=} {len(inj_arg)=} {inj_arg[num]["id"]=}')
-                                inj_data = inj_arg[num][key]
-                                if num == len(inj_arg):
-                                    stopper = 1
+                                if key in inj_arg[num]:
+                                    inj_data = inj_arg[num][key]
+                                # else:
+                                #     inj_data = 'ABYRVALG'
+                                # if num == len(inj_arg):
+                                #     stopper = 1
                                 # print(f'{num=} {inj_arg[num][key]=}')
                             else:
                                 stopper = 1
                                 inj_data = ''
-                                data = ''
+                                # data = ''
 
                         elif isinstance(inj_arg, dict):
-                            if key and key in inj_arg:
-                                inj_data = inj_arg[key]
-                            # elif num + 1 in inj_arg:
-                            #     inj_data = inj_arg[num + 1]
-                            else:
-                                inj_data = 'Not found'
+                            if key:
+                                if key in inj_arg:
+                                    inj_data = inj_arg[key]
+                                else:
+                                    if key == self.temp_var_name and num+1 in inj_arg:
+                                        inj_data = inj_arg[num+1]
+                                    else:
+                                        inj_data = 'Not found'
+                                # print(f'DICT: {inj_data=} {key=} {inj_arg=} {num=}')
 
                                 # print(f'{inj_arg=} {key=} {num=}')
                         elif isinstance(inj_arg, tuple):
-                            print('tuple')
+                            print('VIEWS.PY: Sorry, tuple is not implemented')
                             inj_data = 'Not found'
                         else:
                             print(f'ATTENTION: unknown type var: ({inj_var=} {type(inj_arg)=})'
@@ -159,10 +174,10 @@ class View:
                         # inj_var = ''
                         inj_data = ''
                         # data = data[:inj_start] + data[inj_end + 2:]
-                        data = ''
+                        # data = ''
                     if layer <= DEEPNESS:
                         inj_data, _ = self._just_inject_in_that_file(inj_data, file, num)
-                    data = data[:inj_start] + inj_data + data[inj_end + 2:]
+                    data = f'{data[:inj_start]}{inj_data}{data[inj_end + 2:]}'
                     # print(f'{data =}')
                     # print(f'{inj_var=} {inj_file=}')
                 else:
@@ -173,7 +188,7 @@ class View:
             self.error += 1
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print(f'{fname}[{exc_tb.tb_lineno}]ERROR: while parsing view: ({file}) {e} error#{self.error}')
+            print(f'{fname}[{exc_tb.tb_lineno}]ERROR: while parsing view: {file}\nWHY: {e} error#{self.error}')
             if self.error >= 1:
                 sys.exit(1)
             return '500'
@@ -204,31 +219,28 @@ class View:
         if cycle_pos >= 0:
             cycle_end = data.find('{{*}}', inj_end)
             cycle_data = data[inj_end + 2:cycle_end]
-            cycles = int(inj_var[cycle_pos + 1:])
+            cycles = inj_var[cycle_pos + 1:]
             cycle_var = inj_var[:cycle_pos]
-            cycle_dig = 0
 
-            if cycle_var.isdigit():
-                cycle_dig = int(cycle_var)
-            else:
-                _cycle_var = self._get_value_from_injections(cycle_var)
-                if _cycle_var:
-                    if isinstance(_cycle_var, int):
-                        cycle_dig = _cycle_var
-                    elif isinstance(_cycle_var, str) and _cycle_var.isdigit():
-                        cycle_dig = int(cycle_var)
-                    else:
-                        print(f'views.py ERROR: unknown variable <{cycle_var}> '
-                              f'in ({file}) while expected digit or key if digit')
+            cycles = self._digitize_or_get_from_inj(cycles)
+            cycle_digit = self._digitize_or_get_from_inj(cycle_var)
+            if cycle_digit is None:
+                self.temp_var_name = cycle_var
+                cycle_digit = 0
+            if cycles is None:
+                print(f'views.py ERROR: unknown variable for cycle <{cycle_var=}> <{cycles=}> '
+                      f'in ({file}) while expected digit or key of digit in injections')
+                cycles = 0
             cycles_data = ''
-            # print(f'{inj_var=} {cycles=} {cycle_var=} {cycle_dig=} {cycle_data=} ')
+            # print(f'{inj_var=} {cycles=} {cycle_var=} {cycle_data=} ')
             for i in range(0, cycles):
                 # print(f'cycle start: {i}  id:{cycle_dig + i}')
-                cd, stopper = self._just_inject_in_that_file(cycle_data, file, cycle_dig + i)
+                cd, stopper = self._just_inject_in_that_file(cycle_data, file, cycle_digit + i)
                 if stopper:
                     break
                 cycles_data += cd
                 # print(f'cycle end: {i} {cycle_data=}')
+            self.temp_var_name = ''
             inj_end = cycle_end + 5
             data = f'{data[:inj_start]}{cycles_data}{data[inj_end:]}'
             # print(f'CYCLES ENDED: {data=}')
@@ -253,13 +265,13 @@ class View:
             operand_2 = inj_var[condition_pos + 2:]
             condition = inj_var[condition_pos + 1: condition_pos + 2:]
 
-            # print(f'???? Found condition: ({operand_1} {condition} {operand_2}) in page: {file}')
-            o_1 = self._get_value_from_injections(operand_1)
+            # print(f'???? Found condition: ({operand_1=} {condition=} {operand_2=}) in page: {file}')
+            o_1 = self._digitize_or_get_from_inj(operand_1)
             if condition == '':
                 if not o_1:
                     condition_not_met = True
             else:
-                o_2 = self._get_value_from_injections(operand_2)
+                o_2 = self._digitize_or_get_from_inj(operand_2)
                 if o_1 is None or o_2 is None:
                     condition_not_met = True
                 elif condition == '=':
@@ -273,7 +285,7 @@ class View:
                         condition_not_met = True
             # print(f'{data=}')
             if condition_not_met:
-                # print(f'Condition not met')
+                # print(f'Condition not met: ({operand_1} is {type(operand_1)} {condition=} {operand_2=})')
                 if condition_else == -1:
                     data_without_condition = f'{data[:inj_start]}{data[_inj_end:]}'
                     # Condition is one and not met - cutting condition
@@ -298,7 +310,7 @@ class View:
             key = inj_var[dot_pos + 1:]
             # print(f'{key=} {obj=}')
             inj_arg = self._get_value_from_injections(obj)
-            # print(f'{type(inj_arg)=}')
+            # print(f'{type(inj_arg)=} {inj_arg=}')
             # if isinstance(inj_arg, classmethod):
             #     print(f'{inj_arg.__getattribute__(key)=}')
             #     return inj_arg.__getattribute__(key), key
@@ -312,12 +324,7 @@ class View:
         if dot_pos >= 0:
             obj = inj_var[:dot_pos]
             repeater = inj_var[dot_pos + 1:]
-            if repeater.isdigit():
-                num = int(repeater)
-            else:
-                repeater = self._get_value_from_injections(repeater)
-            # elif repeater in self.injections.keys():
-            #     num = self.injections[repeater]
+            repeater = self._digitize_or_get_from_inj(repeater)
             if repeater:
                 num = repeater
             # print(f'{obj=} {num=}')
@@ -361,6 +368,21 @@ class View:
 
     def path(self, file_name: str):
         return f'{FRONTEND_PATH}{file_name}'
+
+    def _digitize_or_get_from_inj(self, var) -> int | None:
+        if isinstance(var, int):
+            return var
+        elif isinstance(var, str):
+            if var.isdigit():
+                var = int(var)
+            else:
+                var = self._get_value_from_injections(var)
+                if var:
+                    if isinstance(var, str) and var.isdigit():
+                        var = int(var)
+                    elif isinstance(var, int):
+                        return var
+            return var
 
 
 def app(url: str = ''):

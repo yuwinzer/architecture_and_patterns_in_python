@@ -103,8 +103,8 @@ courses_data = [
 
 courses_users_fields = {
     'id': 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE',
-    'course_id': 'INTEGER NOT NULL UNIQUE',
-    'user_id': 'INTEGER NOT NULL UNIQUE',
+    'course_id': 'INTEGER NOT NULL',
+    'user_id': 'INTEGER NOT NULL',
 }
 
 courses_users_data = [
@@ -166,11 +166,13 @@ def insert_data_to_rows(table, data):
 db.UnitOfWork.new_current()
 users = db.Table('users', users_fields, True)
 courses = db.Table('courses', courses_fields, True)
+courses_users = db.Table('courses_users', courses_users_fields, True)
 lines = db.Table('lines', course_lines_fields, True)
 types = db.Table('line_types', course_types_fields, True)
 
 insert_data_to_rows(users, users_data)
 insert_data_to_rows(courses, courses_data)
+insert_data_to_rows(courses_users, courses_users_data)
 insert_data_to_rows(lines, course_lines_data)
 insert_data_to_rows(types, course_types_data)
 
