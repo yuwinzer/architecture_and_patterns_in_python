@@ -1,6 +1,7 @@
 from os import path
 
 import settings
+
 from database import DB
 from framework.request import Request
 from framework.responses import Responses
@@ -59,14 +60,18 @@ class WSGI:
         if self.responser.status == '':
             # Search for view under decorator @app
             self.search_url_and_send(View.views)
+
             # print(f'{self.responser.status=}')
+
             # Search for view in upl.py -> links
             if links and self.responser.status == '':
                 self.search_url_and_send(links)
             if self.responser.status == '':
                 self.responser.status_404()
 
+
         # print(f'SEND STATUS={self.responser.status=} HEADERS={self.responser.headers=}')
+
         # print(f'{self.responser.body=}')
         self.start_response(self.responser.status, self.responser.headers)
         return [bytes(f'{self.responser.body}', encoding='utf-8')]
