@@ -11,8 +11,6 @@ class View:
     def __init__(self,
                  # frontend_path: str = 'frontend',
                  frontend_const: dict = None):
-                 # frontend_admin_vars: dict = None,
-                 # deepness: int = 1):
         # self.frontend_path = frontend_path
         self.frontend_const = frontend_const
         self.frontend_vars = {}
@@ -160,8 +158,8 @@ class View:
                         # print(f'{data=}')
                         # inj_var = ''
                         inj_data = ''
-                        data = data[:inj_start] + data[inj_end + 2:]
-                        # data = ''
+                        # data = data[:inj_start] + data[inj_end + 2:]
+                        data = ''
                     if layer <= DEEPNESS:
                         inj_data, _ = self._just_inject_in_that_file(inj_data, file, num)
                     data = data[:inj_start] + inj_data + data[inj_end + 2:]
@@ -298,8 +296,14 @@ class View:
         if dot_pos >= 0:
             obj = inj_var[:dot_pos]
             key = inj_var[dot_pos + 1:]
-            # print(f'{key=} {arg=}')
+            # print(f'{key=} {obj=}')
             inj_arg = self._get_value_from_injections(obj)
+            # print(f'{type(inj_arg)=}')
+            # if isinstance(inj_arg, classmethod):
+            #     print(f'{inj_arg.__getattribute__(key)=}')
+            #     return inj_arg.__getattribute__(key), key
+            # if inj_arg is None:
+            #     inj_arg = 'N/A'
             return inj_arg, key
         return None, None
 

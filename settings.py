@@ -1,5 +1,4 @@
 from framework.front_controller import Middleware
-import database
 
 MIDDLEWARE = (
     Middleware.answer_time,
@@ -23,4 +22,5 @@ DEEPNESS = 2
 
 FRONTEND_PATH = 'frontend/'
 
-DATABASE = database
+
+DATABASE_FILE = 'database.db'

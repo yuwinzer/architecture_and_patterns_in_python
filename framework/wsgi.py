@@ -1,6 +1,8 @@
 from os import path
 
 import settings
+
+from database import DB
 from framework.request import Request
 from framework.responses import Responses
 from framework.front_controller import Middleware
@@ -26,6 +28,7 @@ class WSGI:
         self.m_wares = settings.MIDDLEWARE
 
     def __call__(self, environ: dict, start_response):
+        # print(f'{self.work=}')
         self.environ = environ
         self.start_response = start_response
 
@@ -49,6 +52,7 @@ class WSGI:
             self.response = self.generate_answer()
 
         # print(f'{self.response=}')
+        DB.commit()
         return self.response
 
     # page_controller
@@ -56,14 +60,18 @@ class WSGI:
         if self.responser.status == '':
             # Search for view under decorator @app
             self.search_url_and_send(View.views)
-            print(f'{self.responser.status=}')
+
+            # print(f'{self.responser.status=}')
+
             # Search for view in upl.py -> links
             if links and self.responser.status == '':
                 self.search_url_and_send(links)
             if self.responser.status == '':
                 self.responser.status_404()
 
-        print(f'SEND STATUS={self.responser.status=} HEADERS={self.responser.headers=}')
+
+        # print(f'SEND STATUS={self.responser.status=} HEADERS={self.responser.headers=}')
+
         # print(f'{self.responser.body=}')
         self.start_response(self.responser.status, self.responser.headers)
         return [bytes(f'{self.responser.body}', encoding='utf-8')]

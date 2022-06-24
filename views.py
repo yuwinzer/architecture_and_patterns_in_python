@@ -24,7 +24,9 @@ FRONTEND_CONST = {
 
 Site = View(FRONTEND_CONST)
 db = DB
-db.db_precount_courses_for_lines()
+
+# db.db_precount_courses_for_lines()
+
 
 users = U
 Site.is_admin = True  # todo
@@ -65,9 +67,11 @@ def courses(request):
             pass
         else:
             if 'course_page' in request.query_params:
-                course = db.db_get_course(request.query_params["course_page"])
-                print(f"{int(course['id'])=} {int(course['id']) in request.user['courses']=} {request.verified}")
-                applied = int(course['id']) in request.user['courses'] if request.verified else False
+
+                course = db.courses.get_by_id(request.query_params["course_page"], as_dict=True)
+                print(f"{int(course['id'])=} {int(course['id']) in request.user.courses=} {request.verified}")
+                applied = int(course['id']) in request.user.courses if request.verified else False
+
                 print(f'{applied=}')
                 return Site.view(request, 'index.html', {'content': 'courses/course_page.html',
                                                          'course': course,
@@ -79,21 +83,27 @@ def courses(request):
                     return Site.view(request, 'index.html',
                                      {'content': 'login.html',
                                       'msg': 'Для записи на курс войдите или зарегистрируйтесь'}, )
-                course = db.db_get_course(request.query_params["enroll_course"])
-                users.add_course(request, int(course['id']))
+
+                course = db.courses.get_by_id(request.query_params["enroll_course"], as_dict=True)
+                # users.add_course(request, int(course['id']))
+
                 print(f'Клиент записан на курс {course["name"]}')
                 return Site.view(request, 'index.html', {'content': 'courses/thank_for_enroll.html',
                                                          'course': course})
 
             elif 'escape_course' in request.query_params:
-                course = db.db_get_course(request.query_params["escape_course"])
-                users.del_course(request, course['id'])
+
+                course = db.courses.get_by_id(request.query_params["escape_course"], as_dict=True)
+                # users.del_course(request, course['id'])
+
                 print(f'Клиент вышел из курса {course["name"]}')
                 return Site.view(request, 'index.html', {'content': 'form_page.html',
                                                          'forms': 'forms.html',
                                                          'curr_line': curr_line,
-                                                         'lines': db.db_get_lines(line),
-                                                         'course': db.db_get_courses_by_line(line),
+
+                                                         'lines': db.lines.get_list_by('parent', line, as_dict=True),
+                                                         'course': db.courses.get_list_by('line', line, as_dict=True),
+
                                                          'form_page': 'form_page.html',
                                                          'line_form': 'line_form.html',
                                                          'course_form': 'courses/course_form.html',
@@ -101,17 +111,22 @@ def courses(request):
 
             if 'line' in request.query_params:
                 line = request.query_params["line"]
-                curr_line = db.db_get_line(line)
-                curr_line = curr_line['name'] if curr_line else ''
+
+                curr_line = db.lines.get_by_id(line).name
+                # curr_line = curr_line['name'] if curr_line else ''
+
             else:
                 line = '0'
         # print(f'{line=}')
         # print(f'{db_count_curses_in_line(line)=}')
+
+        print(f'{db.lines.get_by_id(line)=} {db.courses.get_by("line", line)=}')
         return Site.view(request, 'index.html', {'content': 'form_page.html',
                                                  'forms': 'forms.html',
                                                  'curr_line': curr_line,
-                                                 'lines': db.db_get_lines(line),
-                                                 'course': db.db_get_courses_by_line(line),
+                                                 'lines': db.lines.get_list_by('parent', line, as_dict=True),
+                                                 'course': db.courses.get_list_by('line', line, as_dict=True),
+
                                                  'form_page': 'form_page.html',
                                                  'line_form': 'line_form.html',
                                                  'course_form': 'courses/course_form.html',
@@ -137,7 +152,9 @@ def admin(request):
     page = f'unsupported method {request.method}'
     if request.method == 'GET':
         page = Site.view(request, 'index.html', {'content': 'admin_page.html',
-                                                 'user_list': db.users,})
+
+                                                 'user_list': db.users})
+
     # elif request.method == 'POST':
     #     page = Site.view('index.html', {'content': 'admin_page.html'})
     #     print(f'==Got {request.method=} {request.query_params=} {request.body=}')
@@ -190,7 +207,9 @@ def admin(request):
         return Site.view(request, 'index.html', {'content': 'register.html'})
     elif request.method == 'POST':
         if request.act == 'reg':
-            ok, msg = users.create_user(request)
+
+            ok, msg = users.create_user_from_request(request)
+
             if ok:
                 ok, _ = users.login_user(request, reg_login=True)
                 return Site.view(request, 'index.html', {'content': 'main_page.html',
