@@ -111,13 +111,13 @@ a.cformbutt {
     text-decoration: none;
     text-align: center;
     width: 99%;
-    height: 99%;
+    height: 90%;
 <!--                overflow: auto;-->
     margin: auto;
     border: 1px solid rgba(46, 60, 69, 0.4);
     border-radius: 10px;
-<!--                padding-top: 1rem;-->
-<!--                padding-bottom: 1rem;-->
+    padding-top: .5rem;
+    padding-bottom: .5rem;
     color: rgb(46, 60, 69);
     background-color: rgb(216, 230, 239);
     cursor: pointer;

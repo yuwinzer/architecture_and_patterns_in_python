@@ -44,15 +44,15 @@ class UnitOfWork:
 
     def insert_new(self):
         for obj in self.new_objects:
-            MapperRegistry.get_mapper(obj).insert(obj)
+            MapperRegistry.get_mapper(obj)._insert(obj)
 
     def update_dirty(self):
         for obj in self.dirty_objects:
-            MapperRegistry.get_mapper(obj).update(obj)
+            MapperRegistry.get_mapper(obj)._update(obj)
 
     def delete_removed(self):
         for obj in self.removed_objects:
-            MapperRegistry.get_mapper(obj).delete(obj)
+            MapperRegistry.get_mapper(obj)._delete(obj)
 
     @classmethod
     def new_current(cls):
@@ -88,7 +88,7 @@ class DomainObject:
 
 class Row(DomainObject):
     def __init__(self, table, row: dict):
-        self.id = 999
+        self.id = 0
         for key in row.keys():
             self.__setattr__(key, row[key])
         self.table = table
@@ -135,6 +135,8 @@ class Table:
 
     def get_by_id(self, id, as_dict: bool = False):
         print(f'Searching for {id} in {self}')
+        if id == 0:
+            return
         statement = f"SELECT * FROM {self.table_name} WHERE ID=?"
         self.cursor.execute(statement, (id,))
         result = self.cursor.fetchone()
@@ -143,7 +145,6 @@ class Table:
             if as_dict:
                 return dict(zip(self.fields, result))
             return Row(self, dict(zip(self.fields, result)))
-        return
         #     raise Exception(f'record with id={id} not found')
 
     def get_by(self, column, value, as_dict: bool = False):
@@ -156,14 +157,13 @@ class Table:
             if as_dict:
                 return dict(zip(self.fields, result))
             return Row(self, dict(zip(self.fields, result)))
-        return
 
-    def get_list_by(self, column, value, as_dict: bool = False):
-        print(f'Searching for {value} in {self}=>{column}')
-        statement = f"SELECT * FROM {self.table_name} WHERE {column}=?"
-        self.cursor.execute(statement, (value,))
+    def get_all(self, as_dict: bool = False):
+        print(f'Returning all from {self}')
+        statement = f"SELECT * FROM {self.table_name}"
+        self.cursor.execute(statement)
         result = self.cursor.fetchall()
-        print(f'{statement=} {value=} {result=} {self.__dict__=}')
+        # print(f'{statement=} {result=} {self.__dict__=}')
         if result:
             res = []
             if as_dict:
@@ -173,25 +173,61 @@ class Table:
             for i in result:
                 res.append(Row(self, dict(zip(self.fields, i))))
             return res
-        return
+
+    def get_list_by(self, column, value, to_value: int = None, as_dict: bool = False):
+        if to_value is None:
+            print(f'Searching for {value} in {self}=>{column}')
+            statement = f"SELECT * FROM {self.table_name} WHERE {column}=?"
+            self.cursor.execute(statement, (value,))
+        elif isinstance(to_value, int):
+            print(f'Searching for {value} to {to_value} in {self}=>{column}')
+            statement = f"SELECT * FROM {self.table_name} WHERE {column} BETWEEN ? AND ?;"
+            self.cursor.execute(statement, (value, to_value))
+        result = self.cursor.fetchall()
+        # print(f'{statement=}')
+        # print(f'{value=} {result=} {self.__dict__=}')
+        if result:
+            res = []
+            if as_dict:
+                for i in result:
+                    res.append((dict(zip(self.fields, i))))
+                return res
+            for i in result:
+                res.append(Row(self, dict(zip(self.fields, i))))
+            return res
         #     raise Exception(f'record with id={id} not found')
 
-    def insert(self, row):
+    def count(self, column: str = '', value=None) -> int | None:
+        if column:
+            print(f'Counting for {value} in {self}=>{column}')
+            statement = f"SELECT COUNT(*) FROM {self.table_name} WHERE {column}=?"
+            self.cursor.execute(statement, (value,))
+        else:
+            print(f'Counting for {value} in {self}')
+            statement = f"SELECT COUNT(*) FROM {self.table_name}"
+            self.cursor.execute(statement)
+        result = self.cursor.fetchone()
+        if result:
+            (result,) = result
+        # print(f'{statement=} {value=} {result=} {type(result)=} {self.__dict__=}')
+        return result
+
+    def _insert(self, row):
         print(f'Inserting {row.__dict__} in {row.table}')
         # statement = "INSERT INTO PERSON (USERNAME, FIRSTNAME, LASTNAME) VALUES (?, ?, ?)"
         statements, values, values_q = self._unpack_dict_insert(row)
         statement = f'''INSERT INTO {self.table_name} ({statements}) VALUES ({values_q})'''
         self.cursor.execute(statement, values)
 
-    def update(self, row):
-        print(f'Updating {row.id} in {row.table}')
+    def _update(self, row):
+        # print(f'Updating {row.id} in {row.table}')
         # statement = '''UPDATE PERSON SET USERNAME=?, FIRSTNAME=?, LASTNAME=? WHERE ID=?'''
         statements, values = self._unpack_dict_update(row)
         statement = f'''UPDATE {self.table_name} SET {statements} WHERE ID=?'''
         self.cursor.execute(statement, values)
 
-    def delete(self, person):
-        print(f'Deleting for {person.id} in {person.table}')
+    def _delete(self, person):
+        # print(f'Deleting for {person.id} in {person.table}')
         statement = "DELETE FROM PERSON WHERE ID=?"
         self.cursor.execute(statement, (person.id,))
 

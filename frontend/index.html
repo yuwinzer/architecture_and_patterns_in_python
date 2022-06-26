@@ -23,17 +23,6 @@
                 document.body.innerHTML = result;
             }
 
-<!--            $("body").on("click", "#reg", function(e){-->
-<!--                e.preventDefault();-->
-<!--                var name = encodeURIComponent($('#uname').val());-->
-<!--                var pass = $('#pass').val();-->
-<!--                var tel = $('#tel').val();-->
-<!--                $('#pass').val("");-->
-<!--                var hash = CryptoJS.HmacSHA256(name, pass);-->
-<!--                var hashInBase64 = CryptoJS.enc.Base64.stringify(hash);-->
-<!--                ajax('http://127.0.0.1:8000/register', 'POST', reg, 'act=reg&uname='+name+'&pass='+hashInBase64+'&tel='+tel, {});-->
-<!--            });-->
-
             function auth(type){
                 console.log(type);
                 var name = encodeURIComponent($('#uname').val());

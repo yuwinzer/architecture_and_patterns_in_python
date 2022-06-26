@@ -1,18 +1,17 @@
 from secrets import token_hex
-from framework import db_mapper
 
 from database import DB as db
 
 
 class Users:
 
-    def __init__(self):
-        self.id: int = 0
-        self.username: str
-        self.password: str
-        self.token: str
-        self.tel: str
-        # db_mapper.UnitOfWork.new_current()
+    # def __init__(self):
+    #     self.id: int = 0
+    #     self.username: str
+    #     self.password: str
+    #     self.token: str
+    #     self.tel: str
+    #     db_mapper.UnitOfWork.new_current()
 
     #     self.__username: str = ''
     #     self.__password: str = ''
@@ -62,7 +61,7 @@ class Users:
     #     return self.__courses
     #
     # @add_course.setter
-    def add_course(self, request, _id):
+    def add_course(self, request, _id: int):
         if self.check_course(_id):
             if _id in request.user.courses:
                 return
@@ -70,22 +69,24 @@ class Users:
 
     def del_course(self, request, _id):
         if self.check_course(_id):
-            if _id in request.user['courses']:
-                request.user['courses'].remove(_id)
+            if _id in request.user.courses:
+                request.user.courses.remove(_id)
 
     @staticmethod
-    def check_course(__id):
-        if not isinstance(__id, int):
-            print(f'Course id must be an integer: {__id}')
-        if __id <= 0:
-            print(f'Course id must be higher than 0: {__id}')
+    def check_course(_id: int):
+        if not isinstance(_id, int):
+            print(f'Course id must be an integer: {_id}')
+            return False
+        if _id <= 0:
+            print(f'Course id must be higher than 0: {_id}')
+            return False
         return True
 
     @staticmethod
-    def check_user_token(username, token):
-        user = db.users.get_by('username', username)
-        if user:
-            if user.token == token:
+    def check_user_token(username: str, token: str):
+        _user = db.users.get_by('username', username)
+        if _user:
+            if _user.token == token:
                 return True
             return False
         return None
@@ -105,7 +106,7 @@ class Users:
     #             return user, max_id
     #     return None, max_id
 
-    def get_user(self, username):
+    def get_user(self, username: str):
         user = db.users.get_by('username', username)
         # for user in self.database.users:
         if user:
@@ -133,14 +134,6 @@ class Users:
                           'token': token,
                           'tel': request.auth['tel'],
                           'email': _email})
-            # db_mapper.UnitOfWork.get_current().commit()
-            # self.database.users.append({'id': _max_id + 1,
-            #                             'username': request.auth['username'],
-            #                             'password': request.auth['password'],
-            #                             'token': token,
-            #                             'tel': request.auth['tel'],
-            #                             'email': _email,
-            #                             'courses': []})
             request.headers_to_send['HTTP_AUTHORIZATION'] = f'{request.auth["username"]}:{token}'
             return True, f'Добро пожаловать на наш проект, {request.auth["username"]}. Приятной учебы.'
         return False, 'Данное имя уже занято.'
@@ -158,10 +151,8 @@ class Users:
                         _user.token = str(token_hex(16))
                         _user.to_edit()
                         request.user = _user
-                        # db_mapper.UnitOfWork.get_current().commit()
 
                     request.headers_to_send['HTTP_AUTHORIZATION'] = f'{_user.username}:{_user.token}'
-                    # request.send_headers['HTTP_AUTHORIZATION'] = f'Bearer {_user["username"]}:{_user["token"]}'
                     return True, f'Здравствуйте, {_user.username}<br>Добро пожаловать на наши курсы'
                 return False, 'Неправильный пароль.'
         return False, 'Аккаунта с таким именем не существует'
@@ -172,9 +163,6 @@ class Users:
                 _user = db.users.get_by_id(request.user.id)
                 _user.token = ''
                 _user.to_edit()
-                # for _user in DB.users:
-                #     if _user['username'] == request.username:
-                #         _user['token'] = ''
                 request.user.token = ''
                 request.verified = None
             except Exception as e:
