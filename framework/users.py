@@ -82,14 +82,14 @@ class Users:
             return False
         return True
 
-    @staticmethod
-    def check_user_token(username: str, token: str):
-        _user = db.users.get_by('username', username)
-        if _user:
-            if _user.token == token:
-                return True
-            return False
-        return None
+    # @staticmethod
+    # def check_user_token(username: str, token: str):
+    #     _user = db.users.get_by('username', username)
+    #     if _user:
+    #         if _user.token == token:
+    #             return True
+    #         return False
+    #     return None
         # for user in self.database.users:
         #     if user['username'] == username:
         #         # print(f'check_user_token: {user["username"]=} {user["token"]=}')
@@ -125,6 +125,8 @@ class Users:
                 request.auth['tel'] == '':
             print(f'ERROR on register: В запросе отсутствует(ют) поля : {request.auth=}')
             return False, f'Заполните обязательные поля'
+        if not self.has_allowed_symbols(request.auth['username']):
+            return False, 'Недопустимые символы в имени<br>Используйте инглиш'
         _user = db.users.get_by('username', (request.auth['username']))
         if not _user:
             _email = request.auth['email'] if 'email' in request.auth else ''
@@ -140,13 +142,13 @@ class Users:
 
     def login_user(self, request, reg_login: bool = False):
         # print(f'{request.auth=} {type(request.auth)=}')
-        # auth = request.reg if reg_login else request.auth
-        auth = request.auth
-        if 'username' in auth and 'password' in auth:
-            _user = self.get_user(auth['username'])
-            # print(f'{_user=}')
+        if 'username' in request.auth and 'password' in request.auth:
+            if not self.has_allowed_symbols(request.auth['username']):
+                return False, 'Недопустимые символы в имени<br>Используйте инглиш'
+            _user = self.get_user(request.auth['username'])
             if _user:
-                if _user.password == auth['password']:
+                if _user.password == request.auth['password']:
+                    print(f'LOGIN_USER: {_user.username}')
                     if _user.token == '':
                         _user.token = str(token_hex(16))
                         _user.to_edit()
@@ -167,6 +169,10 @@ class Users:
                 request.verified = None
             except Exception as e:
                 print(f'Не удалось разлогинить аккаунт {request.username} по причине: {e}')
+
+    @staticmethod
+    def has_allowed_symbols(string, lim1: int = 45, lim2: int = 126):
+        return all(lim1 <= ord(c) <= lim2 for c in string)
 
 
 U = Users()

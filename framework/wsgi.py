@@ -45,7 +45,11 @@ class WSGI:
             self.response = self.generate_answer()
 
         # print(f'{self.response=}')
+        # try:
         DB.commit()
+        # except Exception as err:
+        #     print(f'ERROR while commiting: {err}')
+        # print(f'RESPONSE: {self.response}')
         return self.response
 
     # page_controller

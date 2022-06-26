@@ -1,13 +1,24 @@
 from framework import db_mapper as db
 
-users_fields = {
-    'id': 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE',
-    'username': 'VARCHAR (32) NOT NULL UNIQUE',
-    'password': 'VARCHAR (44) NOT NULL',
-    'token': 'VARCHAR (32)',
-    'tel': 'VARCHAR (16)',
-    'email': 'VARCHAR (32)'
-}
+
+# users_fields = {
+#     'id': 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE',
+#     'username': 'VARCHAR (32) NOT NULL UNIQUE',
+#     'password': 'VARCHAR (44) NOT NULL',
+#     'token': 'VARCHAR (32)',
+#     'tel': 'VARCHAR (16)',
+#     'email': 'VARCHAR (32)'
+# }
+
+
+class UsersTable(db.NewTable):
+    id = 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE'
+    username = 'VARCHAR (32) NOT NULL UNIQUE'
+    password = 'VARCHAR (44) NOT NULL'
+    token = 'VARCHAR (32)'
+    tel = 'VARCHAR (16)'
+    email = 'VARCHAR (32)'
+
 
 users_data = [
     {'username': 'Basil', 'password': 'juAevLtnbBX1ZSzf7VbqHsxwAgRmtNdvLWzpsfEEuzE=', 'token': '',
@@ -16,15 +27,29 @@ users_data = [
      'tel': '555-55-55'},
 ]
 
-courses_fields = {
-    'id': 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE',
-    'line': 'SMALLINT NOT NULL',
-    'name': 'VARCHAR (64) NOT NULL',
-    'img': 'VARCHAR (64)',
-    'type': 'TINYINT',
-    'short': 'VARCHAR (64)',
-    'text': 'TEXT'
-}
+
+# courses_fields = {
+#     'id': 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE',
+#     'line': 'SMALLINT NOT NULL',
+#     'name': 'VARCHAR (64) NOT NULL',
+#     'img': 'VARCHAR (64)',
+#     'type': 'TINYINT',
+#     'short': 'VARCHAR (64)',
+#     'text': 'TEXT'
+# }
+
+
+class CoursesTable(db.NewTable):
+    id = 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE'
+    line = 'SMALLINT NOT NULL'
+    name = 'VARCHAR (64) NOT NULL'
+    img = 'VARCHAR (64)'
+    type = 'TINYINT'
+    short = 'VARCHAR (64)'
+    text = 'TEXT'
+    fk_line = {'FOREIGN KEY': "line", 'REFERENCES': ('lines', 'id')}
+    fk_type = {'FOREIGN KEY': "type", 'REFERENCES': ('types', 'id')}
+
 
 courses_data = [
     {
@@ -101,11 +126,32 @@ courses_data = [
     },
 ]
 
-courses_users_fields = {
-    'id': 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE',
-    'course_id': 'INTEGER NOT NULL',
-    'user_id': 'INTEGER NOT NULL',
-}
+
+# courses_users_fields = {
+#     'id': 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE',
+#     'course_id': 'INTEGER NOT NULL',
+#     'user_id': 'INTEGER NOT NULL',
+#     'FK_course_id': {'NAME': 'CONSTRAINT',
+#                      'FOREIGN KEY': 'course_id',
+#                      'REFERENCES': {'courses': 'id'}},
+#     'CONSTRAINT': {'NAME': 'FK_course_id',
+#                    'FOREIGN KEY': 'course_id',
+#                    'REFERENCES': {'courses': 'id'}}
+# }
+
+
+class CourseUsersTable(db.NewTable):
+    # id = 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE'
+    course_id = 'INTEGER NOT NULL'
+    user_id = 'INTEGER NOT NULL'
+    fk_user_id = {'FOREIGN KEY': "user_id", 'REFERENCES': ('users', 'id')}
+    fk_course_id = {'FOREIGN KEY': "course_id", 'REFERENCES': ('courses', 'id')}
+    pk_id = {'PRIMARY KEY': ("course_id", "user_id")}
+
+
+# 'CONSTRAINT FK_1 FOREIGN KEY(PersonID) REFERENCES Persons(PersonID)'
+# 'CONSTRAINT PK_1 PRIMARY KEY (EmpID, DeptID)'
+
 
 courses_users_data = [
     # {'id': 1, 'name': 'онлайн'},
@@ -117,19 +163,33 @@ course_types_fields = {
     'name': 'VARCHAR (64)'
 }
 
+
+class CourseTypesTable(db.NewTable):
+    id = 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE'
+    name = 'VARCHAR (64) NOT NULL UNIQUE'
+
+
 course_types_data = [
     {'id': 1, 'name': 'онлайн'},
     {'id': 2, 'name': 'офлайн'},
 ]
 
-course_lines_fields = {
-    'id': 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE',
-    'parent': 'INTEGER',
-    'courses_in': 'INTEGER',
-    'name': 'VARCHAR (64)'
-}
+# course_lines_fields = {
+#     'id': 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE',
+#     'parent': 'INTEGER',
+#     'courses_in': 'INTEGER',
+#     'name': 'VARCHAR (64)'
+# }
 
-course_lines_data = [
+
+class LinesTable(db.NewTable):
+    id = 'INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE'
+    name = 'VARCHAR (64)'
+    parent = 'INTEGER NOT NULL'
+    courses_in = 'INTEGER NOT NULL'
+
+
+lines_data = [
     {'id': 1, 'parent': 0, 'courses_in': 0, 'name': 'Программирование'},
     {'id': 2, 'parent': 0, 'courses_in': 0, 'name': 'Электроника'},
     {'id': 3, 'parent': 0, 'courses_in': 0, 'name': 'Учимся жить'},
@@ -158,23 +218,22 @@ course_lines_data = [
 ]
 
 
-def insert_data_to_rows(table, data):
-    for elem in data:
-        table.add(elem)
+# def insert_data_to_rows(table, data):
+#     for elem in data:
+#         table.add(elem)
 
 
 db.UnitOfWork.new_current()
-users = db.Table('users', users_fields, True)
-courses = db.Table('courses', courses_fields, True)
-courses_users = db.Table('courses_users', courses_users_fields, True)
-lines = db.Table('lines', course_lines_fields, True)
-types = db.Table('line_types', course_types_fields, True)
+users = db.Table('users', UsersTable, True)
+courses = db.Table('courses', CoursesTable, True)
+courses_users = db.Table('courses_users', CourseUsersTable, True)
+lines = db.Table('lines', LinesTable, True)
+types = db.Table('types', CourseTypesTable, True)
 
-insert_data_to_rows(users, users_data)
-insert_data_to_rows(courses, courses_data)
-insert_data_to_rows(courses_users, courses_users_data)
-insert_data_to_rows(lines, course_lines_data)
-insert_data_to_rows(types, course_types_data)
-
+users.add_rows(users_data)
+courses.add_rows(courses_data)
+courses_users.add_rows(courses_users_data)
+lines.add_rows(lines_data)
+types.add_rows(course_types_data)
 
 db.UnitOfWork.get_current().commit()

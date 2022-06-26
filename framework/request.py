@@ -32,7 +32,7 @@ class Request:
                     headers[key[5:]] = value
                     print('HTTP:', key, value)
                     if key == 'HTTP_AUTHORIZATION':
-                        print('+++++++++++++++++++++++++++++++++++++++++++++++:', key, value)
+                        print(f'+++++++++++++++++++++++++++++++++++++++++++++++: {key}, {value}')
                 else:
                     print('NOT HTTP:', key, value)
         else:
@@ -41,34 +41,32 @@ class Request:
                     headers[key[5:]] = value
         return headers
 
-    def _check_token(self) -> tuple:
-        if self.act in ('login', 'reg'):
-            return True, self.auth['username'], self.users.get_user(self.auth['username'])
+    def _check_token(self) -> tuple[None, None, None] | tuple[bool, str, type(U)]:
         auth = self.env.get('HTTP_AUTHORIZATION')
         # print(f'{self.act=} {auth=}')
-        if auth and auth.startswith('Bearer ') and ':' in auth[7:]:
-            auth = (auth[7:].split(':'))
-            return self.users.check_user_token(auth[0], auth[1]), auth[0], self.users.get_user(auth[0])
+        _username, _token = self._parse_auth_header(auth)
+        if _username:
+            _user = self.users.get_user(_username)
+            if _user:
+                if _user.token == _token:
+                    # print(f'{_username=}')
+                    return True, _username, _user
+                return False, _username, _user
+
+        elif self.act in ('login', 'reg'):
+            _user = self.users.get_user(self.auth['username'])
+            if _user:
+                return True, self.auth['username'], _user
+
         return None, None, None
 
-    # def _get_login(self, parsed_body):
-    #     try:
-    #         auth_params = {}
-    #         auth_params['username'], auth_params['password'] = parsed_body['auth'][7:].split(':')
-    #         return auth_params
-    #     except Exception as e:
-    #         print(f"ERROR: Can't parse request: {e}: {auth_params=} {parsed_body=}")
-    #     return None
-
-    # def _get_register(self, parsed_body):
-    #     try:
-    #         reg_params = {}
-    #         reg_params['username'], reg_params['password'] = parsed_body['reg'][7:].split(':')
-    #         reg_params['tel'] = parsed_body['tel']
-    #         return reg_params
-    #     except Exception as e:
-    #         print(f"ERROR: Can't parse request: {e}: {reg_params=} {parsed_body=}")
-    #     return None
+    @staticmethod
+    def _parse_auth_header(auth) -> tuple[None, None] | tuple[str, str]:
+        if auth:
+            if auth.startswith("Bearer ") and ':' in auth[7:]:
+                _username, _token = (auth[7:].split(':'))
+                return _username, _token
+        return None, None
 
     def _get_get_query_params(self, environ: dict) -> dict | None:
         data = parse.unquote(environ.get('QUERY_STRING'))
@@ -104,11 +102,6 @@ class Request:
                     self.auth['username'] = parsed_body['uname']
                     self.auth['password'] = parsed_body['pass']
                     self.auth['tel'] = parsed_body['tel']
-                # self.auth = self._get_register(parsed_body)
-        # if 'uname' in parsed_body and 'pass' in parsed_body:
-        #     self.auth = self._get_login(parsed_body)
-        # elif 'reg' in parsed_body:
-        #     self.reg = self._get_register(parsed_body)
 
     @staticmethod
     def _parse_query(data: str, terminator: str) -> dict | None:

@@ -55,7 +55,6 @@
                 }
             }
             function setHeaders(xhttp, headers){
-    <!--            console.log('headers: '+headers);-->
                 for(let key in headers){
                     xhttp.setRequestHeader(key, headers[key]);
                 }
@@ -63,15 +62,25 @@
             function load_html(result, headers) {
                 document.body.innerHTML = result;
             }
-            function url(addr){
+            function url(url){
+                window.history.pushState(url, url, url);
                 var token = this.sessionStorage.getItem('token');
                 if (token){
                     header = {"Authorization": "Bearer " +  token}
                 }else{
                     header = {}
                 }
-                ajax(addr, 'GET', load_html, '', header);
+                ajax(url, 'GET', load_html, '', header);
             }
+            function backPage() {
+                window.history.back();
+                ajax(window.location.href, 'GET', load_html, '', header);
+            }
+            window.onpopstate = function() {
+                ajax(window.location.href, 'GET', load_html, '', header);
+            }
+
+</script>
         </script>
     </head>
     <body>
