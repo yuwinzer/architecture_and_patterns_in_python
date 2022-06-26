@@ -35,7 +35,7 @@ h4 {
 .lforms {
     background-color: rgb(46, 60, 69);
 <!--                padding: 10px;-->
-    height: 70px;
+    height: 80px;
     align: center;
 }
 div.text{
@@ -53,22 +53,20 @@ i{
     text-align: center;
     float: left;
     width: 33.3%;
-    height: 50%;
+    height: 35px;
     overflow: auto;
     margin: auto;
-<!--                padding: .3rem;-->
+    padding-top: 5px;
     color: lightgray;
     background-color: rgb(46, 60, 69);
 }
 .uform {
     text-align: center;
-    float: left;
     width: 50%;
     height: auto;
     overflow: auto;
     margin: auto;
     padding-top: 1%;
-    padding-bottom: 1%;
     color: lightgray;
     background-color: rgb(46, 60, 69);
 }
@@ -94,14 +92,12 @@ a.lformbutt {
     display: block;
     text-decoration: none;
     text-align: center;
+    padding-top: 5px;
     width: 97%;
-    height: 48%;
-<!--                overflow: auto;-->
-    margin: 1ren;
+    height: 23px;
+    margin: auto;
     border: 1px solid rgba(46, 60, 69, 0.4);
-    border-radius: 10px;
-    padding-top: 1%;
-    padding-bottom: 1%;
+    border-radius: 100px;
     color: rgb(46, 60, 69);
     background-color: rgb(216, 230, 239);
     cursor: pointer;

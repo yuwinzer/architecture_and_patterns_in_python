@@ -2,9 +2,14 @@ import os
 import sys
 import sqlite3
 import threading
+import inspect
 from settings import DATABASE_FILE
 
 connection = sqlite3.connect(DATABASE_FILE)
+
+
+class NewTable:
+    table_name: str = ''
 
 
 class UnitOfWork:
@@ -39,7 +44,7 @@ class UnitOfWork:
             connection.commit()
             # del self
         except Exception as e:
-            print(f'ERROR: {e}')
+            print(f'!!! ERROR: {e}')
             # raise Exception(e.args)
 
     def insert_new(self):
@@ -100,45 +105,110 @@ class Table:
     Слой преобразования данных
     """
 
-    def __init__(self, table_name: str, fields: dict = None, create=False):
-        self.table_name = table_name
-        self.connection = connection
-        self.cursor = connection.cursor()
-        if create:
-            self.fields = fields
-            self.create_table()
-        else:
-            # self.cursor.execute(
-            #     f'''SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = {table_name};''')
-            self.cursor.execute(
-                f'''SELECT name FROM PRAGMA_TABLE_INFO('{table_name}');''')
-            res = self.cursor.fetchall()
-            self.fields = [str(*column_name) for column_name in res]
-            # print(f'GOT FIELDS: {table_name=} {self.fields}')
+    def __init__(self, table_name: str = None, template: type(NewTable) = None, create=False):
+        try:
+            self.connection = connection
+            self.cursor = connection.cursor()
+            if create:
+                self.table_name = table_name
+                self.create_table(template)
+            else:
+                self.table_name = table_name
+                self._safe_execute(f'''SELECT name FROM PRAGMA_TABLE_INFO('{self.table_name}');''')
+                # self.cursor.execute(
+                #     f'''SELECT name FROM PRAGMA_TABLE_INFO('{self.table_name}');''')
+                res = self.cursor.fetchall()
+                self.fields = [str(*column_name) for column_name in res]
+                # print(f'GOT FIELDS: {table_name=} {self.fields}')
+        except Exception as err:
+            print(f'!!! ERROR while creating/accessing table {self.table_name}: {err}')
+
+    def _safe_execute(self, statement: str, values: tuple | list = None):
+        try:
+            if values:
+                self.cursor.execute(statement, values)
+            else:
+                self.cursor.execute(statement)
+        except Exception as err:
+            print(f'ERROR while counting {inspect.currentframe().f_back.f_code.co_name} '
+                  f'in table "{self.table_name}": {err}')
 
     def __str__(self):
         return self.table_name
 
-    def add(self, data):
-        Row(self, data).to_create()
+    def add(self, row: dict):
+        try:
+            Row(self, row).to_create()
+        except Exception as err:
+            print(f'!!! ERROR while adding row {row} to table {self.table_name}: {err}')
 
-    def create_table(self):
-        self.cursor.execute(f'''SELECT name FROM sqlite_master WHERE type='table' AND name='{self.table_name}';''')
-        table = self.cursor.fetchone()
-        if not table:  # and self.cursor.fetchone()[0] == 0:
-            print(f'Creating table {self.table_name}="{",".join("{} {}".format(*i) for i in self.fields.items())}"')
+    def add_rows(self, rows: list[dict] | tuple[dict]):
+        _row: dict = {}
+        try:
+            for _row in rows:
+                Row(self, _row).to_create()
+        except Exception as err:
+            print(f'!!! ERROR while adding row {_row} to table {self.table_name}: {err}')
 
-            self.cursor.execute(
-                f"CREATE TABLE {self.table_name}({','.join('{} {}'.format(*i) for i in self.fields.items())});")
+    def create_table(self, template):
+        self._safe_execute(f'''SELECT name FROM sqlite_master WHERE type='table' AND name='{self.table_name}';''')
+        # self.cursor.execute(f'''SELECT name FROM sqlite_master WHERE type='table' AND name='{self.table_name}';''')
+        _table = self.cursor.fetchone()
+        _table_string = ''
+        # 'CONSTRAINT FK_1 FOREIGN KEY(PersonID) REFERENCES Persons(PersonID)'
+        # 'CONSTRAINT PK_1 PRIMARY KEY(EmpID, DeptID)'
+
+        if not _table:
+            for _key, _val in template.__dict__.items():
+                if not _key.startswith("__") and _key != 'table.name':
+                    if isinstance(_val, str):
+                        _table_string = f'{_table_string}{_key} {_val},'
+                    elif isinstance(_val, dict):
+                        for _dkey, _dval in _val.items():
+                            if _dkey.upper() == 'FOREIGN KEY':
+                                _table_string = f'{_table_string}CONSTRAINT {_key} FOREIGN KEY({_dval})'
+                            elif _dkey.upper() == 'REFERENCES':
+                                _table_string = f'{_table_string} REFERENCES {_dval[0]}({_dval[1]}),'
+                            elif _dkey.upper() == 'PRIMARY KEY':
+                                _table_string = f'{_table_string}CONSTRAINT {_key} PRIMARY KEY({_dval[0]}, {_dval[1]}),'
+
+                    else:
+                        raise Exception(f'!!! ERROR while parsing table template {self.table_name}: '
+                                        f'Unknown value type of {_key}: {type(_val)} = {_val}')
+
+            print(f'Creating table {self.table_name}:\nCREATE TABLE {_table_string[:-1]}')
+            # self.fields = self.table_template.__dict__
+            # print(f'{self.table_template.__dict__=} and {self.fields=}')
+            # for _field in self.table_template
+            # self.cursor.execute(
+            #     f"CREATE TABLE {self.table_name}({','.join('{} {}'.format(*i) for i in self.fields.items())});")
+            # self.cursor.execute(
+            #     f'CREATE TABLE {self.table_name}'
+            #     f'({",".join("{} {}".format(k, i) for k, i in self.fields.items()
+            #     if not k.startswith("__") and k != "table_name")});')
+            self._safe_execute(f'CREATE TABLE {self.table_name}({_table_string[:-1]});')
+            # self.cursor.execute(
+            #     f'CREATE TABLE {self.table_name}({_table_string[:-1]});')
         else:
             print(f'Table {self.table_name} already exist')
+
+    # def create_table(self):
+    #     self.cursor.execute(f'''SELECT name FROM sqlite_master WHERE type='table' AND name='{self.table_name}';''')
+    #     table = self.cursor.fetchone()
+    #     if not table:  # and self.cursor.fetchone()[0] == 0:
+    #         print(f'Creating table {self.table_name}="{",".join("{} {}".format(*i) for i in self.fields.items())}"')
+    #
+    #         self.cursor.execute(
+    #             f"CREATE TABLE {self.table_name}({','.join('{} {}'.format(*i) for i in self.fields.items())});")
+    #     else:
+    #         print(f'Table {self.table_name} already exist')
 
     def get_by_id(self, id, as_dict: bool = False):
         print(f'Searching for {id} in {self}')
         if id == 0:
             return
         statement = f"SELECT * FROM {self.table_name} WHERE ID=?"
-        self.cursor.execute(statement, (id,))
+        self._safe_execute(statement, (id,))
         result = self.cursor.fetchone()
         # print(f'{result=} {result_columns=} {self.__dict__=}')
         if result:
@@ -150,7 +220,7 @@ class Table:
     def get_by(self, column, value, as_dict: bool = False):
         print(f'Searching for {value} in {self}=>{column}')
         statement = f"SELECT * FROM {self.table_name} WHERE {column}=?"
-        self.cursor.execute(statement, (value,))
+        self._safe_execute(statement, (value,))
         result = self.cursor.fetchone()
         # print(f'{statement=} {value=} {result=} {self.__dict__=}')
         if result:
@@ -161,7 +231,7 @@ class Table:
     def get_all(self, as_dict: bool = False):
         print(f'Returning all from {self}')
         statement = f"SELECT * FROM {self.table_name}"
-        self.cursor.execute(statement)
+        self._safe_execute(statement)
         result = self.cursor.fetchall()
         # print(f'{statement=} {result=} {self.__dict__=}')
         if result:
@@ -178,11 +248,11 @@ class Table:
         if to_value is None:
             print(f'Searching for {value} in {self}=>{column}')
             statement = f"SELECT * FROM {self.table_name} WHERE {column}=?"
-            self.cursor.execute(statement, (value,))
+            self._safe_execute(statement, (value,))
         elif isinstance(to_value, int):
             print(f'Searching for {value} to {to_value} in {self}=>{column}')
             statement = f"SELECT * FROM {self.table_name} WHERE {column} BETWEEN ? AND ?;"
-            self.cursor.execute(statement, (value, to_value))
+            self._safe_execute(statement, (value, to_value))
         result = self.cursor.fetchall()
         # print(f'{statement=}')
         # print(f'{value=} {result=} {self.__dict__=}')
@@ -201,11 +271,11 @@ class Table:
         if column:
             print(f'Counting for {value} in {self}=>{column}')
             statement = f"SELECT COUNT(*) FROM {self.table_name} WHERE {column}=?"
-            self.cursor.execute(statement, (value,))
+            self._safe_execute(statement, (value,))
         else:
             print(f'Counting for {value} in {self}')
             statement = f"SELECT COUNT(*) FROM {self.table_name}"
-            self.cursor.execute(statement)
+            self._safe_execute(statement)
         result = self.cursor.fetchone()
         if result:
             (result,) = result
@@ -217,19 +287,19 @@ class Table:
         # statement = "INSERT INTO PERSON (USERNAME, FIRSTNAME, LASTNAME) VALUES (?, ?, ?)"
         statements, values, values_q = self._unpack_dict_insert(row)
         statement = f'''INSERT INTO {self.table_name} ({statements}) VALUES ({values_q})'''
-        self.cursor.execute(statement, values)
+        self._safe_execute(statement, values)
 
     def _update(self, row):
         # print(f'Updating {row.id} in {row.table}')
         # statement = '''UPDATE PERSON SET USERNAME=?, FIRSTNAME=?, LASTNAME=? WHERE ID=?'''
         statements, values = self._unpack_dict_update(row)
         statement = f'''UPDATE {self.table_name} SET {statements} WHERE ID=?'''
-        self.cursor.execute(statement, values)
+        self._safe_execute(statement, values)
 
     def _delete(self, person):
         # print(f'Deleting for {person.id} in {person.table}')
         statement = "DELETE FROM PERSON WHERE ID=?"
-        self.cursor.execute(statement, (person.id,))
+        self._safe_execute(statement, (person.id,))
 
     @staticmethod
     def _unpack_dict_insert(_dict: dict):

@@ -158,7 +158,7 @@ def contacts(request):
 def admin(request):
     page = f'unsupported method {request.method}'
     page_num = 1
-    users_on_page = 4
+    users_on_page = 8
     users_c_dict = {}
     user_c = ''
     start_user = 1 + ((page_num - 1) * users_on_page)
@@ -173,6 +173,7 @@ def admin(request):
         page = Site.view(request, 'index.html', {'content': 'admin_page.html',
                                                  'user_list': db.users.get_all(as_dict=True),
                                                  'users_c': users_c_dict,
+                                                 'users_amt': users_on_page,
                                                  })
     # elif request.method == 'POST':
     #     page = Site.view('index.html', {'content': 'admin_page.html'})
@@ -200,7 +201,7 @@ def login(request):
 
 
 @app('/logout')
-def login(request):
+def logout(request):
     # print(f'LOGIN GOT AUTH {request.method=} {request.query_params=} {request.act=} {request.auth=}')
     if request.method == 'GET':
         users.logout_user(request)
@@ -220,7 +221,7 @@ def login(request):
 
 
 @app('/register')
-def admin(request):
+def register(request):
     # print(f'REGISTER GOT {request.method=} {request.query_params=} {request.auth=} {request.body=}')
     if request.method == 'GET':
         return Site.view(request, 'index.html', {'content': 'register.html'})
